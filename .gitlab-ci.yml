@@ -1,0 +1,40 @@
+stages:
+  - build
+  - test
+
+variables:
+  # Use Java 17 (or any other version you prefer)
+  JAVA_VERSION: "openjdk-17"
+  # Set the image for the job's environment
+  IMAGE: maven:3.8.4-openjdk-17
+  # Testcontainers configuration for reusing containers (optional)
+  TESTCONTAINERS_REUSE: "true"
+
+before_script:
+  - apt-get update && apt-get install -y curl
+  - curl -sSL https://get.docker.com/ | sh
+  - docker --version
+  - docker-compose --version
+  - docker info
+
+build:
+  stage: build
+  image: $IMAGE
+  script:
+    - echo "Building the project"
+    - mvn clean install -DskipTests
+
+test:
+  stage: test
+  image: $IMAGE
+  services:
+    - docker:19.03.12-dind
+  script:
+    - echo "Running the tests"
+    # Start the Oracle XE container with Testcontainers
+    - mvn test -Dtest=YourSpringBootTestClass
+  artifacts:
+    paths:
+      - target/test-*.xml
+      - target/*.jar
+
